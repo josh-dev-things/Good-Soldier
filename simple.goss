@@ -1,0 +1,18 @@
+//Anything before the start tag will be ignored.
+
+START
+
+i1 = 10
+i2 = 3
+i3 = i1 + i2 //Addition of two integers
+i4 -> i3 //i4 points to i3
+out i4
+
+b1 = true
+b2 = false
+b3 = b1 && b2
+out b3
+
+END
+
+//Anything after the end tag will be ignored
