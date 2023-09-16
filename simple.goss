@@ -10,7 +10,7 @@ out i4
 
 b1 = true
 b2 = false
-b3 = b1 && b2
+b3 = true || false
 out b3
 
 END

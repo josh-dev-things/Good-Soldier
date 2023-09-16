@@ -18,6 +18,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -144,10 +145,96 @@ public class interpreter
         }
     }
 
+    private static String[] popIndexInStringArray(String[] arr, int index)
+    {
+        String[] local = new String[arr.length - 1];
+
+        int j = 0;
+        for(int i = 0; i < arr.length; i++)
+        {
+            if(i != index)
+            {
+                local[j] = arr[i];
+                j++;
+            }
+        }
+
+        return local;
+    }
+
     private static void execute(tokenMap tm)
     {
         String[] tokens = tm.tokens;
         String[] tokenTypes = tm.tokenTypes;
+        
+        /*
+         * Handling boolean operators
+         */
+        int bOperatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<BOperator>");
+        if(bOperatorInstanceCount > 0)
+        {
+            // Iterate through every boolean operator in the expression.
+            for(int i = 0; i < bOperatorInstanceCount; i++)
+            {
+                int bOperatorIndex = Arrays.asList(tokenTypes).indexOf("<BOperator>");
+
+                if(bOperatorIndex < 0)
+                {
+                    log("Err. Execution found a bOperator but also didn't.");
+                    return;
+                }
+
+
+                boolean l = false, r = false;
+                String bOperator = "";
+                if(tokenTypes[bOperatorIndex-1].equals("<Logic>") && tokenTypes[bOperatorIndex+1].equals("<Logic>"))
+                {
+                    if(tokens[bOperatorIndex-1].equals("true"))
+                    {
+                        l = true;
+                    } else {
+                        l = false;
+                    }
+
+                    if(tokens[bOperatorIndex+1].equals("true"))
+                    {
+                        r = true;
+                    } else {
+                        r = false;
+                    }
+
+                    bOperator = tokens[bOperatorIndex];
+                }
+
+                // Now perform the boolean operation
+                boolean result = false;
+                switch (bOperator) {
+                    case "|":
+                    case "||":
+                        log("OR: " + l + " || " + r);
+                        result = l || r;
+                        break;
+                    
+                    case "&":
+                    case "&&":
+                        log("AND");
+                        result = l && r;
+                        break;
+
+                    default:
+                        log("Err. BOperator calculation fell through to default. Output set to false.");
+                        break;
+                }
+
+                tokens[bOperatorIndex + 1] = result ? "true" : "false";
+                tokenTypes[bOperatorIndex + 1] = "<Logic>";
+                tokens = popIndexInStringArray(tokens, bOperatorIndex - 1);
+                tokens = popIndexInStringArray(tokens, bOperatorIndex - 1);
+                tokenTypes = popIndexInStringArray(tokenTypes, bOperatorIndex - 1);
+                tokenTypes = popIndexInStringArray(tokenTypes, bOperatorIndex - 1);
+            }
+            log("bOperation complete, result: " + Arrays.toString(tokenTypes) + " : " + Arrays.toString(tokens));
+        }
         
 
         /*
@@ -156,19 +243,36 @@ public class interpreter
         if(java.util.Arrays.stream(tokenTypes).anyMatch("<Assignment>"::equals))
         {
             int assignIndex = java.util.Arrays.binarySearch(tokenTypes, "<Assignment>"); // Should normally just be 1 but who knows.
-            System.out.println(assignIndex);
+            //System.out.println(assignIndex);
             if(assignIndex > 0)
             {
                 String varName = tokens[assignIndex-1];
                 String varVal = tokens[assignIndex+1];
-                if(variableNames.contains(varName))
+
+                switch(tokens[assignIndex])
                 {
-                    variableValues.set(variableNames.indexOf(varName), varVal);
-                    log("Assigned value: " + varVal + " to variable: " + varName);
-                } else {
-                    variableNames.add(varName);
-                    variableValues.add(variableNames.indexOf(varName), varVal);
-                    log("Assigned value: " + varVal + " to new variable: " + varName);
+                    case "=":
+                        if(variableNames.contains(varName))
+                        {
+                            variableValues.set(variableNames.indexOf(varName), varVal);
+                            log("Assigned value: " + varVal + " to variable: " + varName);
+                        } else {
+                            variableNames.add(varName);
+                            variableValues.add(variableNames.indexOf(varName), varVal);
+                            log("Assigned value: " + varVal + " to new variable: " + varName);
+                        }
+                        break;
+
+                    case "->":
+                        //Handle a pointer assignment
+                        break;
+
+                    case "<-":
+                        //Handle a pointer assignement
+                        break;
+
+                    default:
+                        break;
                 }
             }
         }
@@ -193,10 +297,11 @@ class parser
         Assignment("(\\<\\-)|(\\-\\>)|(\\=)"),
         Comparator("(\\=\\=)|(\\<\\=)|(\\>\\=)"),
         Keyword("in|out"),
-        Variable("[a-zA-Z_]+[a-zA-Z0-9_]*"),
+        Logic("true|false"),
         Set("\\[([a-zA-Z_]+[a-zA-Z0-9_]*)(,[a-zA-Z_]+[a-zA-Z0-9_]*)*"),
         Comment("\\/\\/.*"),
-        Logic("true|false");
+        Variable("[a-zA-Z_]+[a-zA-Z0-9_]*");
+
         private final String regex;
 
         private tokenMapping(String s)
