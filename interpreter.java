@@ -16,8 +16,11 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 
 public class interpreter
@@ -51,6 +54,9 @@ public class interpreter
             return msg;
         }
     }
+
+    private static ArrayList<String> variableNames = new ArrayList<String>(); // e.g. i1
+    private static ArrayList<String> variableValues = new ArrayList<String>(); // e.g. 59
 
     public static void main(String args[])
     {
@@ -108,8 +114,10 @@ public class interpreter
                     log("-----\nParsing: " + line+"\n-----");
                     String[] blocks = line.split(" ");
 
-                    int parseResult = parser.parse(blocks);
-                    if(parseResult < 0)
+                    tokenMap parseResult = parser.parse(blocks);
+                    execute(parseResult);
+
+                    if(parseResult == null)
                     {
                         // Error!
                         log("Interpreter encountered error while parsing line: " + lineCount);
@@ -133,6 +141,36 @@ public class interpreter
         } catch(IOException e) {
             // TODO: handle exception
             e.printStackTrace();
+        }
+    }
+
+    private static void execute(tokenMap tm)
+    {
+        String[] tokens = tm.tokens;
+        String[] tokenTypes = tm.tokenTypes;
+        
+
+        /*
+         * Assignment to variables. Should only be done after all operations have been completed. Expression should be reduced to 3 tokens, 1 assignment symbol and L + R
+         */
+        if(java.util.Arrays.stream(tokenTypes).anyMatch("<Assignment>"::equals))
+        {
+            int assignIndex = java.util.Arrays.binarySearch(tokenTypes, "<Assignment>"); // Should normally just be 1 but who knows.
+            System.out.println(assignIndex);
+            if(assignIndex > 0)
+            {
+                String varName = tokens[assignIndex-1];
+                String varVal = tokens[assignIndex+1];
+                if(variableNames.contains(varName))
+                {
+                    variableValues.set(variableNames.indexOf(varName), varVal);
+                    log("Assigned value: " + varVal + " to variable: " + varName);
+                } else {
+                    variableNames.add(varName);
+                    variableValues.add(variableNames.indexOf(varName), varVal);
+                    log("Assigned value: " + varVal + " to new variable: " + varName);
+                }
+            }
         }
     }
 
@@ -167,10 +205,12 @@ class parser
         }   
     }
 
-    public static int parse(String[] tokens)
+    public static tokenMap parse(String[] tokens)
     {
-        String tokenCombination = "";
+        String[] tokenCombination = new String[tokens.length];
+        String tokenDebugString = "";
         
+        int tIndex = 0;
         tokenLoop:
         for(String token : tokens)
         {
@@ -187,14 +227,15 @@ class parser
                 if(tokenPattern.matcher(token).matches())
                 {
                     // Correct token!
-                    tokenCombination = tokenCombination + "<" + tm.name() + ">";
+                    tokenCombination[tIndex] = "<" + tm.name() + ">";
+                    tokenDebugString += "<" + tm.name() + ">"; 
                     match = true;
-                    interpreter.log(token + " : <" + tm.name() + ">");
+                    // interpreter.log(token + " : <" + tm.name() + ">");
                     
                     if(tm == tokenMapping.Comment)
                     {
                         // Comment found, rest of the line should not be parsed.
-                        interpreter.log("Comment found: Skipping...");
+                        // interpreter.log("Comment found: Skipping...");
                         break tokenLoop; // THIS IS SO COOL
                     }
 
@@ -206,12 +247,30 @@ class parser
             if(!match)
             {
                 interpreter.log("Parser failed to match token: '" + token + "'");
-                return -1;
+                return null;
             }
+            tIndex++;
         }
 
         //The token combination is the most important!
-        interpreter.log(tokenCombination);
-        return 0;
+        interpreter.log(Arrays.toString(tokenCombination));
+        return new tokenMap(tokens, tokenCombination);
+    }
+    
+}
+
+
+/*
+ * Necessary so that the executor can access the tokens and their types.
+ */
+class tokenMap
+{
+    public String[] tokens;
+    public String[] tokenTypes;
+
+    public tokenMap(String[] tokens, String[] tokenTypes)
+    {
+        this.tokens = tokens;
+        this.tokenTypes = tokenTypes;
     }
 }
