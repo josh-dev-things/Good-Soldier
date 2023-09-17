@@ -280,7 +280,19 @@ public class interpreter
             }
             log("bOperation complete, result: " + Arrays.toString(tokenTypes) + " : " + Arrays.toString(tokens));
         }
-        
+
+        /*
+         * Handling Operators. (Integers for now : 17.09.23)
+         * 
+        */
+        int operatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<Operator>"); // There are obvious ways to improve performance. Calculate this when parsing for example.
+        if(operatorInstanceCount > 0)
+        {
+            for(int i = 0; i < operatorInstanceCount; i++)
+            {
+                
+            }
+        }
 
         /*
          * Assignment to variables. Should only be done after all operations have been completed. Expression should be reduced to 3 tokens, 1 assignment symbol and L + R
@@ -338,15 +350,15 @@ class parser
     enum tokenMapping{
         Whitespace("^\s*$"),
         Numeric("[0-9]+"),
-        Operator("\\+|\\-|\\/|\\*"), // +, -, /, *
-        BOperator("(\\|{1,2})|(\\&{1,2})|\\!"),
+        Operator("\\+|\\-|\\/|\\*|\\%"), // +, -, /, *
+        BOperator("(\\|{1,2})|(\\&{1,2})"),
         Assignment("(\\<\\-)|(\\-\\>)|(\\=)"),
         Comparator("(\\=\\=)|(\\<\\=)|(\\>\\=)"),
         Keyword("in|out"),
         Logic("true|false"),
         Set("\\[([a-zA-Z_]+[a-zA-Z0-9_]*)(,[a-zA-Z_]+[a-zA-Z0-9_]*)*"),
         Comment("\\/\\/.*"),
-        Variable("[a-zA-Z_]+[a-zA-Z0-9_]*");
+        Variable("\\!?[a-zA-Z_]+[a-zA-Z0-9_]*");
 
         private final String regex;
 
