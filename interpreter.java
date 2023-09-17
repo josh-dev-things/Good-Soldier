@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -119,7 +120,7 @@ public class interpreter
                      * Have found a statement to parse. Many lines are likely to be whitespace!
                      */
                     log("-----\nParsing: " + line+"\n-----");
-                    String[] blocks = line.split(" ");
+                    String[] blocks = line.split("\\s+");
 
                     tokenMap parseResult = parser.parse(blocks);
 
@@ -430,6 +431,7 @@ class parser
     // Debugging this will be a pain
     enum tokenMapping{
         Whitespace("^\s*$"),
+        String("\".*\""),
         Numeric("[0-9]+"),
         Operator("\\+|\\-|\\/|\\*|\\%"), // +, -, /, *
         BOperator("(\\|{1,2})|(\\&{1,2})"),

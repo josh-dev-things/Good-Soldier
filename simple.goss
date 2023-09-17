@@ -2,18 +2,23 @@
 
 START
 
+// Integers
 i1 = 10
 i2 = 3
 i3 = i1 / i2 //Division of two integers
 i4 = i1 % i2
 out i4
 
-END
-
+// Booleans
 b1 = true
 b2 = false
 b3 = b1 || b2
 b4 = b3 || b1 || b2
 out b3
+
+// Strings
+s1 = "Hello_World"
+
+END
 
 //Anything after the end tag will be ignored
