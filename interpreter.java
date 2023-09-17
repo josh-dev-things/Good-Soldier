@@ -116,7 +116,6 @@ public class interpreter
                     String[] blocks = line.split(" ");
 
                     tokenMap parseResult = parser.parse(blocks);
-                    execute(parseResult);
 
                     if(parseResult == null)
                     {
@@ -124,6 +123,12 @@ public class interpreter
                         log("Interpreter encountered error while parsing line: " + lineCount);
                         return;
                     }
+                    
+                    if(execute(parseResult) < 0)
+                    {
+                        log("Interpreter encountered error while executing line: " + lineCount);
+                        return;
+                    } 
 
                 }   else    {
                     Pattern startMatch = Pattern.compile(".*START.*");
@@ -162,7 +167,7 @@ public class interpreter
         return local;
     }
 
-    private static void execute(tokenMap tm)
+    private static int execute(tokenMap tm)
     {
         String[] tokens = tm.tokens;
         String[] tokenTypes = tm.tokenTypes;
@@ -181,30 +186,70 @@ public class interpreter
                 if(bOperatorIndex < 0)
                 {
                     log("Err. Execution found a bOperator but also didn't.");
-                    return;
+                    return -1;
                 }
 
 
                 boolean l = false, r = false;
                 String bOperator = "";
-                if(tokenTypes[bOperatorIndex-1].equals("<Logic>") && tokenTypes[bOperatorIndex+1].equals("<Logic>"))
+                
+                bOperator = tokens[bOperatorIndex];
+                if(tokenTypes[bOperatorIndex - 1].equals("<Logic>"))
                 {
                     if(tokens[bOperatorIndex-1].equals("true"))
                     {
                         l = true;
                     } else {
                         l = false;
+                    } 
+                } else if(tokenTypes[bOperatorIndex - 1].equals("<Variable>")) {
+                    if(!variableNames.contains(tokens[bOperatorIndex - 1]))
+                    {
+                        log("Err. Variable not initialized.");
+                        return -1; 
                     }
 
+                    if(variableValues.get(variableNames.indexOf(tokens[bOperatorIndex-1])).equals("true"))
+                    {
+                        l = true;
+                    } else if(variableValues.get(variableNames.indexOf(tokens[bOperatorIndex-1])).equals("false"))
+                    {
+                        l = false;
+                    }  else {
+                        // l variable is apparently not initialized or not of correct type
+                        log("Err. Variable: " + tokens[bOperatorIndex-1] + " is not a boolean.");
+                        return -1;
+                    }
+                }
+                
+                if(tokenTypes[bOperatorIndex + 1].equals("<Logic>"))
+                {
                     if(tokens[bOperatorIndex+1].equals("true"))
                     {
                         r = true;
                     } else {
                         r = false;
+                    } 
+                } else if(tokenTypes[bOperatorIndex + 1].equals("<Variable>")) {
+                    if(!variableNames.contains(tokens[bOperatorIndex + 1]))
+                    {
+                        log("Err. Variable not initialized.");
+                        return -1; 
                     }
 
-                    bOperator = tokens[bOperatorIndex];
+                    if(variableValues.get(variableNames.indexOf(tokens[bOperatorIndex+1])).equals("true"))
+                    {
+                        r = true;
+                    } else if(variableValues.get(variableNames.indexOf(tokens[bOperatorIndex+1])).equals("false"))
+                    {
+                        r = false;
+                    }  else {
+                        // l variable is apparently not initialized or not of correct type
+                        log("Err. Variable: " + tokens[bOperatorIndex+1] + " is not a boolean.");
+                        return -1;
+                    }
                 }
+                 
 
                 // Now perform the boolean operation
                 boolean result = false;
@@ -222,8 +267,8 @@ public class interpreter
                         break;
 
                     default:
-                        log("Err. BOperator calculation fell through to default. Output set to false.");
-                        break;
+                        log("Err. BOperator calculation fell through to default. Operator not recognised?");
+                        return -1;
                 }
 
                 tokens[bOperatorIndex + 1] = result ? "true" : "false";
@@ -276,6 +321,7 @@ public class interpreter
                 }
             }
         }
+        return 0;
     }
 
     public static void log(String s)
