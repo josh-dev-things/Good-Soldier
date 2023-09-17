@@ -26,6 +26,11 @@ import java.util.regex.Pattern;
 
 public class interpreter
 {
+    /*
+     * Debug attributes for modification via cmd line args
+    */
+    private static boolean debug = false; //NOT USED YET!
+
     enum fileSearchRegex{
         Script(".*\\.goss");
         private final String regex;
@@ -69,6 +74,7 @@ public class interpreter
                 Pattern goss_match = Pattern.compile(fileSearchRegex.Script.regex);
                 Matcher matcher = goss_match.matcher(args[0]);
                 boolean is_goss = matcher.find();
+
                 if(is_goss)
                 {
                     //Interpret the goss
@@ -250,7 +256,6 @@ public class interpreter
                     }
                 }
                  
-
                 // Now perform the boolean operation
                 boolean result = false;
                 switch (bOperator) {
@@ -283,13 +288,81 @@ public class interpreter
 
         /*
          * Handling Operators. (Integers for now : 17.09.23)
-         * 
         */
         int operatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<Operator>"); // There are obvious ways to improve performance. Calculate this when parsing for example.
         if(operatorInstanceCount > 0)
         {
             for(int i = 0; i < operatorInstanceCount; i++)
             {
+                int operatorIndex = Arrays.asList(tokenTypes).indexOf("<Operator>"); // Gets index of first operator instance
+                
+                if(operatorIndex < 0)
+                {
+                    log("Err. Searching for percieved operator in expression failed.");
+                    return -1;
+                }
+
+                int l, r;
+                String operator = tokens[operatorIndex];
+                try{
+                    if(tokenTypes[operatorIndex - 1].equals("<Numeric>"))
+                    {
+                        l = Integer.parseInt(tokens[operatorIndex-1]);
+                    } else if(tokenTypes[operatorIndex - 1].equals("<Variable>")) {
+                        l = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex - 1])));
+                    } else {
+                        log("Err. unexpected type left of operator.");
+                        return -1;
+                    }
+
+                    if(tokenTypes[operatorIndex + 1].equals("<Numeric>"))
+                    {
+                        r = Integer.parseInt(tokens[operatorIndex + 1]);
+                    } else if(tokenTypes[operatorIndex + 1].equals("<Variable>")) {
+                        r = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex + 1])));
+                    } else {
+                        log("Err. unexpected type right of operator.");
+                        return -1;
+                    }
+                } catch (NumberFormatException nfe) {
+                    log("Err. Unable to format numeric type.");
+                    return -1;
+                }
+
+                //Now perform the integer operation
+                int result = 0;
+                switch (operator) {
+                    case "+":
+                        result = l + r;
+                        break;
+
+                    case "-":
+                        result = l - r;
+                        break;
+
+                    case "/":
+                        result = l / r;
+                        break;
+
+                    case "*":
+                        result = l * r;
+                        break;
+
+                    case "%":
+                        result = l % r;
+                        break;
+                
+                    default:
+                        log("Err. Operator calculation fell through to defualt. Operator not recognised?");
+                        return -1;
+                }
+
+                tokens[operatorIndex + 1] = String.valueOf(result);
+                tokenTypes[operatorIndex + 1] = "<Numeric>";
+                tokens = popIndexInStringArray(tokens, operatorIndex - 1);
+                tokens = popIndexInStringArray(tokens, operatorIndex - 1);
+                tokenTypes = popIndexInStringArray(tokenTypes, operatorIndex - 1);
+                tokenTypes = popIndexInStringArray(tokenTypes, operatorIndex - 1);
                 
             }
         }
@@ -339,6 +412,14 @@ public class interpreter
     public static void log(String s)
     {
         System.out.println(s);;
+    }
+
+    public static void log(String s, boolean error)
+    {
+        if(error)
+        {
+            System.out.println(s);
+        }
     }
 }
 
