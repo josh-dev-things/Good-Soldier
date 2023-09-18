@@ -120,6 +120,14 @@ public class interpreter
                      * Have found a statement to parse. Many lines are likely to be whitespace!
                      */
                     log("-----\nParsing: " + line+"\n-----");
+
+                    /*
+                     * Line splitting system needs to be re-written:
+                     * - Iterate through every character until it STOPS matching a token? Then go to the previous character and there is your token!
+                     * - e.g. variable1 would only be matched to a token until the space after variable1 was found.
+                     * - e.g. variable2+variable3 would only be matched to <Var><Op><Var> Because variables cannot contain + character!
+                     * - This is not top priority atm, save for later.
+                     */
                     String[] blocks = line.split("\\s+");
 
                     tokenMap parseResult = parser.parse(blocks);
@@ -178,6 +186,68 @@ public class interpreter
     {
         String[] tokens = tm.tokens;
         String[] tokenTypes = tm.tokenTypes;
+
+
+        /*
+         * Handling keywords!
+         */
+        if(java.util.Arrays.stream(tokenTypes).anyMatch("<Keyword>"::equals))
+        {
+            int keywordIndex = Arrays.binarySearch(tokenTypes, "<Keyword>");
+            if(keywordIndex < 0)
+            {
+                log("Err. The keyword could not be found in the expression.");
+                return -1;
+            } else {
+                // Handle the keyword.
+                String keyword = tokens[keywordIndex];
+                switch (keyword) {
+                    case "out":
+                        // Output to console.
+                        if(tokens.length > 2 || !(tokenTypes[1].equals("<Variable>") || tokenTypes[1].equals("<String>")))
+                        {
+                            log("Err. Incorrect usage of out keyword.");
+                            return -1;
+                        } else {
+                            if(tokenTypes[1].equals("<Variable>"))
+                            {
+                                if(variableNames.contains(tokens[1]))
+                                {
+                                    // Output variable value
+                                    System.out.println(variableValues.get(variableNames.indexOf(tokens[1])).replace("\"", ""));
+                                } else {
+                                    log("Err. Incorrect usage of out keyword. Variable Access Error.");
+                                    return -1;
+                                }
+                            } else {
+                                System.out.println(tokens[1].replace("\"", ""));
+                            }
+                        }
+                        return 0;
+
+                    case "in":
+                        // Get input from console!
+                        String inString ="\"" + System.console().readLine() + "\"";
+                        tokenMap inputTokenMap = parser.parse(new String[]{inString});
+                        if(inputTokenMap == null)
+                        {
+                            log("Err. Invalid input.");
+                            return -1;
+                        }
+                        String token = inputTokenMap.tokens[0];
+                        String tokenType = inputTokenMap.tokenTypes[0];
+                        
+                        tokens[keywordIndex] = token;
+                        tokenTypes[keywordIndex] = tokenType;
+                        log("Read input: " + token + " : " + tokenType);
+                        break;
+                
+                    default:
+                        log("Err. The keyword switch fell through to default.");
+                        return -1;
+                }
+            }
+        } 
         
         /*
          * Handling boolean operators
@@ -407,6 +477,7 @@ public class interpreter
                 }
             }
         }
+
         return 0;
     }
 

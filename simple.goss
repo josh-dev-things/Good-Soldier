@@ -18,6 +18,10 @@ out b3
 
 // Strings
 s1 = "Hello_World"
+out s1
+s2 = in
+out s2
+
 
 END
 
