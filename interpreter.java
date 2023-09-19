@@ -114,7 +114,15 @@ public class interpreter
             {
                 line = lines[lineCount - 1];
                 lines[lineCount - 1] = line;
-                log(line);
+
+                //Check for any tags
+                if(parser.isTag(line))
+                {
+                    tagNames.add(line.replace(":", ""));
+                    tagLines.add(lineCount); // NB This is line number NOT index!
+                    log("Found a tag: " + line.replace(":", "") + " -> " + lineCount);
+                }
+
                 lineCount++;
             }
             reader.close();
@@ -524,6 +532,7 @@ class parser
     enum tokenMapping{
         Whitespace("^\s*$"),
         String("\".*\""),
+        Tag("[a-zA-Z]+[0-9]*\\:"),
         Numeric("[0-9]+"),
         Operator("\\+|\\-|\\/|\\*|\\%"), // +, -, /, *
         BOperator("(\\|{1,2})|(\\&{1,2})"),
@@ -573,7 +582,9 @@ class parser
                     if(tm == tokenMapping.Comment)
                     {
                         // Comment found, rest of the line should not be parsed.
-                        // interpreter.log("Comment found: Skipping...");
+                        interpreter.log("Comment found: Skipping...");
+                        tokenCombination = Arrays.copyOfRange(tokenCombination, 0, tIndex); // Copy only the part of the expression that is not a comment. (This is clean imo).
+                        tokens = Arrays.copyOfRange(tokens, 0, tIndex);
                         break tokenLoop; // THIS IS SO COOL
                     }
 
@@ -593,6 +604,12 @@ class parser
         //The token combination is the most important!
         interpreter.log(Arrays.toString(tokenCombination));
         return new tokenMap(tokens, tokenCombination);
+    }
+
+    public static boolean isTag(String line)
+    {
+        Pattern pattern = Pattern.compile(tokenMapping.Tag.regex);
+        return pattern.matcher(line).matches();
     }
     
 }

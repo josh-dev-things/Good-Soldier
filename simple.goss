@@ -1,21 +1,21 @@
 //Anything before the start tag will be ignored.
 START
 
-// Integers
+integers:
 i1 = 10
 i2 = 3
 i3 = i1 / i2 //Division of two integers
 i4 = i1 % i2
 out i4
 
-// Booleans
+booleans:
 b1 = true
 b2 = false
 b3 = b1 || b2
 b4 = b3 || b1 || b2
 out b3
 
-// Strings
+strings:
 s1 = "Hello_World"
 out s1
 s2 = in
