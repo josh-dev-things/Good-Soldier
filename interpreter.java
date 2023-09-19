@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,6 +65,8 @@ public class interpreter
 
     private static ArrayList<String> variableNames = new ArrayList<String>(); // e.g. i1
     private static ArrayList<String> variableValues = new ArrayList<String>(); // e.g. 59
+    private static LinkedList<String> tagNames = new LinkedList<String>();
+    private static LinkedList<Integer> tagLines = new LinkedList<Integer>();
 
     public static void main(String args[])
     {
@@ -102,11 +105,24 @@ public class interpreter
 
         try {
             reader = new BufferedReader(new FileReader(pathToGoss));
-            String line = reader.readLine();
             int lineCount = 1;
-            
-            while(line != null)
+            String[] lines = reader.lines().toArray(String[]::new);
+
+            // Need to iterate through the whole document first to look for tags!
+            String line = lines[lineCount - 1];
+            while(lineCount <= lines.length)
             {
+                line = lines[lineCount - 1];
+                lines[lineCount - 1] = line;
+                log(line);
+                lineCount++;
+            }
+            reader.close();
+            
+            lineCount = 1;
+            while(lineCount - 1 < lines.length)
+            {
+                line = lines[lineCount - 1];
                 if(startFlagFound)
                 {
                     Pattern endMatch = Pattern.compile(".*END.*");
@@ -146,16 +162,21 @@ public class interpreter
                     } 
 
                 }   else    {
-                    Pattern startMatch = Pattern.compile(".*START.*");
-                    if(startMatch.matcher(line).find()) // Placed after potential parse to avoid parsing the START flag!
+                    if(line != null)
                     {
-                        log("Interpreter found START flag on line " + lineCount);
-                        startFlagFound = true;
+                        Pattern startMatch = Pattern.compile(".*START.*");
+                        if(startMatch.matcher(line).find()) // Placed after potential parse to avoid parsing the START flag!
+                        {
+                            log("Interpreter found START flag on line " + lineCount);
+                            startFlagFound = true;
+                        }
+                    } else {
+                        log("Null line!?");
+                        return;
                     }
                 }
                 
                 // Read the next instruction!
-                line = reader.readLine();
                 lineCount++;
             }
             reader.close();
@@ -508,7 +529,7 @@ class parser
         BOperator("(\\|{1,2})|(\\&{1,2})"),
         Assignment("(\\<\\-)|(\\-\\>)|(\\=)"),
         Comparator("(\\=\\=)|(\\<\\=)|(\\>\\=)"),
-        Keyword("in|out"),
+        Keyword("in|out|jump\\?|jump"),
         Logic("true|false"),
         Set("\\[([a-zA-Z_]+[a-zA-Z0-9_]*)(,[a-zA-Z_]+[a-zA-Z0-9_]*)*"),
         Comment("\\/\\/.*"),
