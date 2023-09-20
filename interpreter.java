@@ -67,6 +67,7 @@ public class interpreter
     private static ArrayList<String> variableValues = new ArrayList<String>(); // e.g. 59
     private static LinkedList<String> tagNames = new LinkedList<String>();
     private static LinkedList<Integer> tagLines = new LinkedList<Integer>();
+    private static int lineCount = 1;
 
     public static void main(String args[])
     {
@@ -105,7 +106,6 @@ public class interpreter
 
         try {
             reader = new BufferedReader(new FileReader(pathToGoss));
-            int lineCount = 1;
             String[] lines = reader.lines().toArray(String[]::new);
 
             // Need to iterate through the whole document first to look for tags!
@@ -217,7 +217,7 @@ public class interpreter
         String[] tokenTypes = tm.tokenTypes;
 
 
-        /*
+        /**
          * Handling keywords!
          */
         if(java.util.Arrays.stream(tokenTypes).anyMatch("<Keyword>"::equals))
@@ -270,15 +270,98 @@ public class interpreter
                         tokenTypes[keywordIndex] = tokenType;
                         log("Read input: " + token + " : " + tokenType);
                         break;
+
+                    case "jump":
+                        if(tokens[1] != null)
+                        {
+                            int tagIndex = 1; // Hacky
+                            if(tagIndex < 0)
+                            {
+                                return -1;
+                            }
+
+                            String tagName = tokens[tagIndex];
+                            if(tagNames.contains(tagName))
+                            {
+                                lineCount = tagLines.get(tagNames.indexOf(tagName));
+                            } else {
+                                log("Err. Unexpected tag found.");
+                                return -1;
+                            }
+                        }
+                        break;
+
+                    case "jump?":
+                        if(tokens[1] != null && tokens[2] != null)
+                        {
+                            // Token 1 will be the condition... Token 2 will be the destination
+                            if(tokenTypes[1].equals("<Logic>"))
+                            {
+                                if(tokens[1].equals("false"))
+                                {
+                                    break;
+                                }
+                            } else if(tokenTypes[1].equals("<Variable>")) {
+                                if(variableNames.contains(tokens[1]))
+                                {
+                                    if(variableValues.get(variableNames.indexOf(tokens[1])) == "false")
+                                    {
+                                        break;
+                                    }
+                                } else {
+                                    log("Err. Unknown variable.");
+                                    return -1;
+                                }
+                            } else {
+                                log("Err. Unexpected type @ condition.");
+                                return -1;
+                            }
+
+                            int tagIndex = 2;
+                            if(tagIndex < 0)
+                            {
+                                return -1;
+                            }
+
+                            String tagName = tokens[tagIndex];
+                            if(tagNames.contains(tagName))
+                            {
+                                lineCount = tagLines.get(tagNames.indexOf(tagName));
+                            } else {
+                                log("Err. Unexpected tag found.");
+                                return -1;
+                            }
+                        }
+                        break;
                 
                     default:
                         log("Err. The keyword switch fell through to default.");
                         return -1;
                 }
             }
-        } 
+        }
+
+        /**
+         * Tag jumping
+        */
+        if(Arrays.asList(tokenTypes).contains("<Tag>"))
+        {
+            int tagIndex = Arrays.asList(tokenTypes).indexOf("<Tag>");
+            if(tagIndex < 0)
+            {
+                return -1;
+            }
+
+            String tagName = tokens[tagIndex];
+            if(tagNames.contains(tagName))
+            {
+                lineCount = tagLines.get(tagNames.indexOf(tagName));
+            } else {
+                log("Err. Unexpected tag found.");
+            }
+        }
         
-        /*
+        /**
          * Handling boolean operators
          */
         int bOperatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<BOperator>");
@@ -386,7 +469,7 @@ public class interpreter
             log("bOperation complete, result: " + Arrays.toString(tokenTypes) + " : " + Arrays.toString(tokens));
         }
 
-        /*
+        /**
          * Handling Operators. (Integers for now : 17.09.23)
         */
         int operatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<Operator>"); // There are obvious ways to improve performance. Calculate this when parsing for example.
@@ -537,7 +620,7 @@ class parser
         Operator("\\+|\\-|\\/|\\*|\\%"), // +, -, /, *
         BOperator("(\\|{1,2})|(\\&{1,2})"),
         Assignment("(\\<\\-)|(\\-\\>)|(\\=)"),
-        Comparator("(\\=\\=)|(\\<\\=)|(\\>\\=)"),
+        Comparator("(\\=\\=)|(\\<\\=)|(\\>\\=)|\\>||\\<"),
         Keyword("in|out|jump\\?|jump"),
         Logic("true|false"),
         Set("\\[([a-zA-Z_]+[a-zA-Z0-9_]*)(,[a-zA-Z_]+[a-zA-Z0-9_]*)*"),

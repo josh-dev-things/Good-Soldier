@@ -8,6 +8,8 @@ i3 = i1 / i2 //Division of two integers
 i4 = i1 % i2
 out i4
 
+// jump? true integers
+
 booleans:
 b1 = true
 b2 = false

@@ -1,0 +1,10 @@
+START
+
+i1 = 5
+loop:
+out "Please_Enter_'BEANS'"
+
+
+out "LIFT_OFF"
+
+END
