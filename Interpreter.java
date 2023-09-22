@@ -1,6 +1,6 @@
 /*
  * This is the interpreter for Good Soldier (gos) Script: .goss
- * gos protocols will be located in .gosl files
+ * gos protocols will be located in .gosp files
  * 
  * Keywords:
  *  out
@@ -16,6 +16,7 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.stream.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,10 +24,11 @@ import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.nio.file.*;
 
 
 
-public class interpreter
+public class Interpreter
 {
     /*
      * Debug attributes for modification via cmd line args
@@ -98,11 +100,29 @@ public class interpreter
                 break;
 
             default:
-                log(errorMessage.Usage.msg);
+                log("Err. " + errorMessage.Usage.msg);
                 return;
 
         }
+        discoverProtocolFiles();
         parseGoss(args[0]);
+    }
+
+    private static String[] discoverProtocolFiles()
+    {
+        String[] protocolFilePaths = null;
+
+        try(Stream<Path> stream = Files.walk(Paths.get("./"))){
+            Object[] paths = stream.filter(path -> path.getFileName().toString().endsWith(".gosp")).toArray();
+            for (Object p : paths) {
+                log("Found protocol file: " + p.toString());
+            }
+        } catch (Exception e) {
+            log("Err. Loading protocols failed.");
+            e.printStackTrace();
+        }
+
+        return protocolFilePaths;
     }
     
     private static void parseGoss(String pathToGoss)
@@ -122,7 +142,7 @@ public class interpreter
                 lines[lineCount - 1] = line;
 
                 //Check for any tags
-                if(parser.isTag(line))
+                if(Parser.isTag(line))
                 {
                     tagNames.add(line.replace(":", ""));
                     tagLines.add(lineCount); // NB This is line number NOT index!
@@ -160,7 +180,7 @@ public class interpreter
                      */
                     String[] blocks = line.split("\\s+");
 
-                    tokenMap parseResult = parser.parse(blocks);
+                    tokenMap parseResult = Parser.parse(blocks);
 
                     if(parseResult == null)
                     {
@@ -250,7 +270,8 @@ public class interpreter
                         if(variableNames.contains(l))
                         {
                             l = variableValues.get(variableNames.indexOf(l));
-                            type = parser.parse(new String[]{l}).tokenTypes[0];
+                            l = l.replace("\"", "");
+                            type = Parser.parse(new String[]{l}).tokenTypes[0];
                         }
                     }
 
@@ -259,7 +280,8 @@ public class interpreter
                         if(variableNames.contains(r))
                         {
                             r = variableValues.get(variableNames.indexOf(r));
-                            tokenTypes[comparatorIndex + 1] = parser.parse(new String[]{r}).tokenTypes[0];
+                            r = r.replace("\"", "");
+                            tokenTypes[comparatorIndex + 1] = Parser.parse(new String[]{r}).tokenTypes[0];
                         }
                     }
                     
@@ -452,7 +474,7 @@ public class interpreter
                     {
                         l = Integer.parseInt(tokens[operatorIndex-1]);
                     } else if(tokenTypes[operatorIndex - 1].equals("<Variable>")) {
-                        l = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex - 1])));
+                        l = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex - 1])).replace("\"", ""));
                     } else {
                         log("Err. unexpected type left of operator.");
                         return -1;
@@ -462,42 +484,48 @@ public class interpreter
                     {
                         r = Integer.parseInt(tokens[operatorIndex + 1]);
                     } else if(tokenTypes[operatorIndex + 1].equals("<Variable>")) {
-                        r = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex + 1])));
+                        r = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex + 1])).replace("\"", ""));
                     } else {
                         log("Err. unexpected type right of operator.");
                         return -1;
                     }
                 } catch (NumberFormatException nfe) {
                     log("Err. Unable to format numeric type.");
+                    nfe.printStackTrace();
                     return -1;
                 }
 
                 //Now perform the integer operation
                 int result = 0;
-                switch (operator) {
-                    case "+":
-                        result = l + r;
-                        break;
+                try{
+                    switch (operator) {
+                        case "+":
+                            result = l + r;
+                            break;
 
-                    case "-":
-                        result = l - r;
-                        break;
+                        case "-":
+                            result = l - r;
+                            break;
 
-                    case "/":
-                        result = l / r;
-                        break;
+                        case "/":
+                            result = l / r;
+                            break;
 
-                    case "*":
-                        result = l * r;
-                        break;
+                        case "*":
+                            result = l * r;
+                            break;
 
-                    case "%":
-                        result = l % r;
-                        break;
-                
-                    default:
-                        log("Err. Operator calculation fell through to defualt. Operator not recognised?");
-                        return -1;
+                        case "%":
+                            result = l % r;
+                            break;
+                    
+                        default:
+                            log("Err. Operator calculation fell through to defualt. Operator not recognised?");
+                            return -1;
+                    }
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    return -1;
                 }
 
                 tokens[operatorIndex + 1] = String.valueOf(result);
@@ -550,7 +578,7 @@ public class interpreter
                     case "in":
                         // Get input from console!
                         String inString ="\"" + System.console().readLine() + "\"";
-                        tokenMap inputTokenMap = parser.parse(new String[]{inString});
+                        tokenMap inputTokenMap = Parser.parse(new String[]{inString});
                         if(inputTokenMap == null)
                         {
                             log("Err. Invalid input.");
@@ -699,7 +727,7 @@ public class interpreter
 
 
 
-class parser
+class Parser
 {
     // Debugging this will be a pain
     enum tokenMapping{
@@ -736,7 +764,7 @@ class parser
         {
             if(token == "")
             {
-                interpreter.log("EMPTY");
+                Interpreter.log("EMPTY");
                 continue;
             }
 
@@ -755,7 +783,7 @@ class parser
                     if(tm == tokenMapping.Comment)
                     {
                         // Comment found, rest of the line should not be parsed.
-                        interpreter.log("Comment found: Skipping...");
+                        Interpreter.log("Comment found: Skipping...");
                         tokenCombination = Arrays.copyOfRange(tokenCombination, 0, tIndex); // Copy only the part of the expression that is not a comment. (This is clean imo).
                         tokens = Arrays.copyOfRange(tokens, 0, tIndex);
                         break tokenLoop; // THIS IS SO COOL
@@ -768,14 +796,14 @@ class parser
             // If no match has been found then the parser fails!
             if(!match)
             {
-                interpreter.log("Parser failed to match token: '" + token + "'");
+                Interpreter.log("Parser failed to match token: '" + token + "'");
                 return null;
             }
             tIndex++;
         }
 
         //The token combination is the most important!
-        interpreter.log(Arrays.toString(tokenCombination));
+        Interpreter.log(Arrays.toString(tokenCombination));
         return new tokenMap(tokens, tokenCombination);
     }
 

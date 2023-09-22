@@ -1,0 +1,21 @@
+START
+
+out "---\nDivision-Calculator\n---"
+
+out "Enter-Numerator:"
+op1 = in
+
+divByZeroAvoidance:
+out "Enter-Divisor:"
+op2 = in
+jump? op2 == 0 divByZeroAvoidance
+
+quotient = op1 / op2
+remainder = op1 % op2
+
+out "Result:"
+out quotient
+out "Remainder:"
+out remainder
+
+END
