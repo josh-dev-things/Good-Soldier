@@ -216,133 +216,6 @@ public class interpreter
         String[] tokens = tm.tokens;
         String[] tokenTypes = tm.tokenTypes;
 
-
-        /**
-         * Handling keywords!
-         */
-        if(java.util.Arrays.stream(tokenTypes).anyMatch("<Keyword>"::equals))
-        {
-            int keywordIndex = Arrays.binarySearch(tokenTypes, "<Keyword>");
-            if(keywordIndex < 0)
-            {
-                log("Err. The keyword could not be found in the expression.");
-                return -1;
-            } else {
-                // Handle the keyword.
-                String keyword = tokens[keywordIndex];
-                switch (keyword) {
-                    case "out":
-                        // Output to console.
-                        if(tokens.length > 2 || !(tokenTypes[1].equals("<Variable>") || tokenTypes[1].equals("<String>")))
-                        {
-                            log("Err. Incorrect usage of out keyword.");
-                            return -1;
-                        } else {
-                            if(tokenTypes[1].equals("<Variable>"))
-                            {
-                                if(variableNames.contains(tokens[1]))
-                                {
-                                    // Output variable value
-                                    System.out.println(variableValues.get(variableNames.indexOf(tokens[1])).replace("\"", ""));
-                                } else {
-                                    log("Err. Incorrect usage of out keyword. Variable Access Error.");
-                                    return -1;
-                                }
-                            } else {
-                                System.out.println(tokens[1].replace("\"", ""));
-                            }
-                        }
-                        return 0;
-
-                    case "in":
-                        // Get input from console!
-                        String inString ="\"" + System.console().readLine() + "\"";
-                        tokenMap inputTokenMap = parser.parse(new String[]{inString});
-                        if(inputTokenMap == null)
-                        {
-                            log("Err. Invalid input.");
-                            return -1;
-                        }
-                        String token = inputTokenMap.tokens[0];
-                        String tokenType = inputTokenMap.tokenTypes[0];
-                        
-                        tokens[keywordIndex] = token;
-                        tokenTypes[keywordIndex] = tokenType;
-                        log("Read input: " + token + " : " + tokenType);
-                        break;
-
-                    case "jump":
-                        if(tokens[1] != null)
-                        {
-                            int tagIndex = 1; // Hacky
-                            if(tagIndex < 0)
-                            {
-                                return -1;
-                            }
-
-                            String tagName = tokens[tagIndex];
-                            if(tagNames.contains(tagName))
-                            {
-                                lineCount = tagLines.get(tagNames.indexOf(tagName));
-                            } else {
-                                log("Err. Unexpected tag found.");
-                                return -1;
-                            }
-                        }
-                        break;
-
-                    case "jump?":
-                        if(tokens[1] != null && tokens[2] != null)
-                        {
-                            // Token 1 will be the condition... Token 2 will be the destination
-                            if(tokenTypes[1].equals("<Logic>"))
-                            {
-                                if(tokens[1].equals("false"))
-                                {
-                                    break;
-                                }
-                            } else if(tokenTypes[1].equals("<Variable>")) {
-                                if(variableNames.contains(tokens[1]))
-                                {
-                                    if(variableValues.get(variableNames.indexOf(tokens[1])) == "false")
-                                    {
-                                        break;
-                                    }
-                                } else {
-                                    log("Err. Unknown variable.");
-                                    return -1;
-                                }
-                            } else {
-                                log("Err. Unexpected type @ condition.");
-                                return -1;
-                            }
-
-                            int tagIndex = 2;
-                            if(tagIndex < 0)
-                            {
-                                return -1;
-                            }
-
-                            String tagName = tokens[tagIndex];
-                            if(tagNames.contains(tagName))
-                            {
-                                lineCount = tagLines.get(tagNames.indexOf(tagName));
-                            } else {
-                                log("Err. Unexpected tag found.");
-                                return -1;
-                            }
-                        }
-                        break;
-                
-                    default:
-                        log("Err. The keyword switch fell through to default.");
-                        return -1;
-                }
-            }
-        }
-
-
-
         /**
          * Handling Comparisons
          */
@@ -575,6 +448,132 @@ public class interpreter
                 
             }
         }
+        
+        /**
+         * Handling keywords!
+         */
+        if(java.util.Arrays.stream(tokenTypes).anyMatch("<Keyword>"::equals))
+        {
+            int keywordIndex = Arrays.binarySearch(tokenTypes, "<Keyword>");
+            if(keywordIndex < 0)
+            {
+                log("Err. The keyword could not be found in the expression.");
+                return -1;
+            } else {
+                // Handle the keyword.
+                String keyword = tokens[keywordIndex];
+                switch (keyword) {
+                    case "out":
+                        // Output to console.
+                        if(tokens.length > 2 || !(tokenTypes[1].equals("<Variable>") || tokenTypes[1].equals("<String>")))
+                        {
+                            log("Err. Incorrect usage of out keyword.");
+                            return -1;
+                        } else {
+                            if(tokenTypes[1].equals("<Variable>"))
+                            {
+                                if(variableNames.contains(tokens[1]))
+                                {
+                                    // Output variable value
+                                    System.out.println(variableValues.get(variableNames.indexOf(tokens[1])).replace("\"", ""));
+                                } else {
+                                    log("Err. Incorrect usage of out keyword. Variable Access Error.");
+                                    return -1;
+                                }
+                            } else {
+                                System.out.println(tokens[1].replace("\"", ""));
+                            }
+                        }
+                        return 0;
+
+                    case "in":
+                        // Get input from console!
+                        String inString ="\"" + System.console().readLine() + "\"";
+                        tokenMap inputTokenMap = parser.parse(new String[]{inString});
+                        if(inputTokenMap == null)
+                        {
+                            log("Err. Invalid input.");
+                            return -1;
+                        }
+                        String token = inputTokenMap.tokens[0];
+                        String tokenType = inputTokenMap.tokenTypes[0];
+                        
+                        tokens[keywordIndex] = token;
+                        tokenTypes[keywordIndex] = tokenType;
+                        log("Read input: " + token + " : " + tokenType);
+                        break;
+
+                    case "jump":
+                        if(tokens[1] != null)
+                        {
+                            int tagIndex = 1; // Hacky
+                            if(tagIndex < 0)
+                            {
+                                return -1;
+                            }
+
+                            String tagName = tokens[tagIndex];
+                            if(tagNames.contains(tagName))
+                            {
+                                lineCount = tagLines.get(tagNames.indexOf(tagName));
+                            } else {
+                                log("Err. Unexpected tag found.");
+                                return -1;
+                            }
+                        }
+                        break;
+
+                    case "jump?":
+                        if(tokens[1] != null && tokens[2] != null)
+                        {
+                            // Token 1 will be the condition... Token 2 will be the destination
+                            if(tokenTypes[1].equals("<Logic>"))
+                            {
+                                if(tokens[1].equals("false"))
+                                {
+                                    break;
+                                }
+                            } else if(tokenTypes[1].equals("<Variable>")) {
+                                if(variableNames.contains(tokens[1]))
+                                {
+                                    if(variableValues.get(variableNames.indexOf(tokens[1])) == "false")
+                                    {
+                                        break;
+                                    }
+                                } else {
+                                    log("Err. Unknown variable.");
+                                    return -1;
+                                }
+                            } else {
+                                log("Err. Unexpected type @ condition.");
+                                return -1;
+                            }
+
+                            int tagIndex = 2;
+                            if(tagIndex < 0)
+                            {
+                                return -1;
+                            }
+
+                            String tagName = tokens[tagIndex];
+                            if(tagNames.contains(tagName))
+                            {
+                                lineCount = tagLines.get(tagNames.indexOf(tagName));
+                            } else {
+                                log("Err. Unexpected tag found.");
+                                return -1;
+                            }
+                        }
+                        break;
+                
+                    default:
+                        log("Err. The keyword switch fell through to default.");
+                        return -1;
+                }
+            }
+        }
+
+ 
 
         /*
          * Assignment to variables. Should only be done after all operations have been completed. Expression should be reduced to 3 tokens, 1 assignment symbol and L + R
