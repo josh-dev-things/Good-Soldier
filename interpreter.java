@@ -74,6 +74,12 @@ public class interpreter
         // Args will likely contain path to a .goss file for now.
         switch(args.length)
         {
+            case 2:
+                // Enables usage of full interpreter debug log.
+                if(args[1].equals("debug"))
+                {
+                    debug = true;
+                }
             case 1:
                 //Only one argument is likely to be a file to interpret!
                 Pattern goss_match = Pattern.compile(fileSearchRegex.Script.regex);
@@ -84,7 +90,6 @@ public class interpreter
                 {
                     //Interpret the goss
                     log("Interpreter recieved a .goss path. Searching...");
-                    parseGoss(args[0]);
                 } else {
                     //Not a .goss file, what else could it be?
                     log(errorMessage.Usage.msg);
@@ -97,6 +102,7 @@ public class interpreter
                 return;
 
         }
+        parseGoss(args[0]);
     }
     
     private static void parseGoss(String pathToGoss)
@@ -261,6 +267,10 @@ public class interpreter
                     switch (tokens[comparatorIndex]) {
                         case "==":
                             result = l.equals(r);
+                            break;
+
+                        case "!=":
+                            result = !(l.equals(r));
                             break;
 
                         case "<=":
@@ -671,15 +681,19 @@ public class interpreter
 
     public static void log(String s)
     {
-        System.out.println(s);;
-    }
-
-    public static void log(String s, boolean error)
-    {
-        if(error)
+        if(debug || s.contains("Err"))
         {
             System.out.println(s);
         }
+    }
+
+    /**
+     * This is me being funny. Good Soldier Script etc. so internally "reporting" is the same as "speaking" or outputting something. Let me have fun.
+     * @param s
+     */
+    public static void report(String s)
+    {
+        System.out.println(s);
     }
 }
 
@@ -696,7 +710,7 @@ class parser
         Operator("\\+|\\-|\\/|\\*|\\%"), // +, -, /, *
         BOperator("(\\|{1,2})|(\\&{1,2})"),
         Assignment("(\\<\\-)|(\\-\\>)|(\\=)"),
-        Comparator("(\\=\\=)|(\\<\\=)|(\\>\\=)|\\>||\\<"),
+        Comparator("(\\=\\=)|(\\<\\=)|(\\>\\=)|\\>||\\<||(\\!\\=)"),
         Keyword("in|out|jump\\?|jump"),
         Logic("true|false"),
         Set("\\[([a-zA-Z_]+[a-zA-Z0-9_]*)(,[a-zA-Z_]+[a-zA-Z0-9_]*)*"),
