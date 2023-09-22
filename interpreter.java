@@ -341,25 +341,52 @@ public class interpreter
             }
         }
 
-        /**
-         * Tag jumping
-        */
-        if(Arrays.asList(tokenTypes).contains("<Tag>"))
-        {
-            int tagIndex = Arrays.asList(tokenTypes).indexOf("<Tag>");
-            if(tagIndex < 0)
-            {
-                return -1;
-            }
 
-            String tagName = tokens[tagIndex];
-            if(tagNames.contains(tagName))
+
+        /**
+         * Handling Comparisons
+         */
+        int comparatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<Comparator>");
+        if(comparatorInstanceCount > 0)
+        {
+            for(int i = 0; i < comparatorInstanceCount; i++)
             {
-                lineCount = tagLines.get(tagNames.indexOf(tagName));
-            } else {
-                log("Err. Unexpected tag found.");
+                int comparatorIndex = Arrays.asList(tokenTypes).indexOf("<Comparator>");
+                if(comparatorIndex < 0)
+                {
+                    log("Err. Couldn't find the comparator I found.");
+                    return -1;
+                }
+
+                if(tokenTypes[comparatorIndex - 1] != null && tokenTypes[comparatorIndex + 1] != null)
+                {
+                    if(tokenTypes[comparatorIndex - 1].equals(tokenTypes[comparatorIndex + 1]))
+                    {
+                        String type = tokenTypes[comparatorIndex - 1];
+                        switch (tokens[comparatorIndex]) {
+                            case "==":
+                                if(type.equals("<String>") || type.equals("<Numeric>"))
+                                {
+
+                                } else {
+                                    log("Err. Invalid type for == comparison.");
+                                    return -1;
+                                }
+                                break;
+                        
+                            default:
+                                break;
+                        }
+                    } else {
+                        log("Err. Cannot compare two operands of different types.");
+                    }
+                } else {
+                    log("Err. Incorrect number of operands for comparison.");
+                    return -1;
+                }
             }
         }
+        
         
         /**
          * Handling boolean operators
@@ -377,7 +404,6 @@ public class interpreter
                     log("Err. Execution found a bOperator but also didn't.");
                     return -1;
                 }
-
 
                 boolean l = false, r = false;
                 String bOperator = "";
