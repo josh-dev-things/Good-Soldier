@@ -216,7 +216,7 @@ public class interpreter
         String[] tokens = tm.tokens;
         String[] tokenTypes = tm.tokenTypes;
 
-        /**
+        /*
          * Handling Comparisons
          */
         int comparatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<Comparator>");
@@ -231,37 +231,88 @@ public class interpreter
                     return -1;
                 }
 
+                boolean result = false;
                 if(tokenTypes[comparatorIndex - 1] != null && tokenTypes[comparatorIndex + 1] != null)
                 {
-                    if(tokenTypes[comparatorIndex - 1].equals(tokenTypes[comparatorIndex + 1]))
-                    {
-                        String type = tokenTypes[comparatorIndex - 1];
-                        switch (tokens[comparatorIndex]) {
-                            case "==":
-                                if(type.equals("<String>") || type.equals("<Numeric>"))
-                                {
+                    String type = tokenTypes[comparatorIndex - 1];
+                    String l,r;
+                    l = tokens[comparatorIndex-1];
+                    r = tokens[comparatorIndex+1];
 
-                                } else {
-                                    log("Err. Invalid type for == comparison.");
-                                    return -1;
-                                }
-                                break;
-                        
-                            default:
-                                break;
+                    if(type.equals("<Variable>"))
+                    {
+                        if(variableNames.contains(l))
+                        {
+                            l = variableValues.get(variableNames.indexOf(l));
+                            type = parser.parse(new String[]{l}).tokenTypes[0];
                         }
-                    } else {
-                        log("Err. Cannot compare two operands of different types.");
                     }
+
+                    if(tokenTypes[comparatorIndex + 1].equals("<Variable>"))
+                    {
+                        if(variableNames.contains(r))
+                        {
+                            r = variableValues.get(variableNames.indexOf(r));
+                            tokenTypes[comparatorIndex + 1] = parser.parse(new String[]{r}).tokenTypes[0];
+                        }
+                    }
+                    
+
+                    switch (tokens[comparatorIndex]) {
+                        case "==":
+                            result = l.equals(r);
+                            break;
+
+                        case "<=":
+                            if(type.equals("<Numeric>")) // This looks stupid. Someone fix.
+                            {
+                                result = Integer.parseInt(l) <= Integer.parseInt(r);
+                            }
+                            break;
+
+                        case ">=":
+                            if(type.equals("<Numeric>"))
+                            {
+                                result = Integer.parseInt(l) >= Integer.parseInt(r);
+                            }
+                            break;
+
+                        case "<":
+                            if(type.equals(("<Numeric>")))
+                            {
+                                result = Integer.parseInt(l) < Integer.parseInt(r);
+                            }
+                            break;
+
+                        case ">":
+                            if(type.equals("<Numeric>"))
+                            {
+                                result = Integer.parseInt(l) > Integer.parseInt(r);
+                            }
+                            break;
+                    
+                        default:
+                        log("Err. Comparator switch fell through to default");
+                            return -1;
+                    }
+                    log("Result of comparison: " + l + " " + tokens[comparatorIndex] + " " + r + " = " + result);
+                    
                 } else {
                     log("Err. Incorrect number of operands for comparison.");
                     return -1;
                 }
+
+                tokens[comparatorIndex + 1] = result ? "true" : "false";
+                tokenTypes[comparatorIndex + 1] = "<Logic>";
+                tokens = popIndexInStringArray(tokens, comparatorIndex - 1);
+                tokens = popIndexInStringArray(tokens, comparatorIndex - 1);
+                tokenTypes = popIndexInStringArray(tokenTypes, comparatorIndex - 1);
+                tokenTypes = popIndexInStringArray(tokenTypes, comparatorIndex - 1);  
             }
         }
         
         
-        /**
+        /*
          * Handling boolean operators
          */
         int bOperatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<BOperator>");
