@@ -237,14 +237,10 @@ public class Interpreter
         return local;
     }
 
-    private static int execute(tokenMap tm)
+    private static tokenMap executeComparison(tokenMap tM)
     {
-        String[] tokens = tm.tokens;
-        String[] tokenTypes = tm.tokenTypes;
-
-        /*
-         * Handling Comparisons
-         */
+        String[] tokenTypes = tM.tokenTypes;
+        String[] tokens = tM.tokens;
         int comparatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<Comparator>");
         if(comparatorInstanceCount > 0)
         {
@@ -254,7 +250,7 @@ public class Interpreter
                 if(comparatorIndex < 0)
                 {
                     log("Err. Couldn't find the comparator I found.");
-                    return -1;
+                    return null;
                 }
 
                 boolean result = false;
@@ -325,13 +321,13 @@ public class Interpreter
                     
                         default:
                         log("Err. Comparator switch fell through to default");
-                            return -1;
+                            return null;
                     }
                     log("Result of comparison: " + l + " " + tokens[comparatorIndex] + " " + r + " = " + result);
                     
                 } else {
                     log("Err. Incorrect number of operands for comparison.");
-                    return -1;
+                    return null;
                 }
 
                 tokens[comparatorIndex + 1] = result ? "true" : "false";
@@ -342,11 +338,14 @@ public class Interpreter
                 tokenTypes = popIndexInStringArray(tokenTypes, comparatorIndex - 1);  
             }
         }
-        
-        
-        /*
-         * Handling boolean operators
-         */
+        return new tokenMap(tokens, tokenTypes);
+    }
+
+    private static tokenMap executeBOperator(tokenMap tM)
+    {
+        String[] tokenTypes = tM.tokenTypes;
+        String[] tokens = tM.tokens;
+
         int bOperatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<BOperator>");
         if(bOperatorInstanceCount > 0)
         {
@@ -358,7 +357,7 @@ public class Interpreter
                 if(bOperatorIndex < 0)
                 {
                     log("Err. Execution found a bOperator but also didn't.");
-                    return -1;
+                    return null;
                 }
 
                 boolean l = false, r = false;
@@ -377,7 +376,7 @@ public class Interpreter
                     if(!variableNames.contains(tokens[bOperatorIndex - 1]))
                     {
                         log("Err. Variable not initialized.");
-                        return -1; 
+                        return null; 
                     }
 
                     if(variableValues.get(variableNames.indexOf(tokens[bOperatorIndex-1])).equals("true"))
@@ -389,7 +388,7 @@ public class Interpreter
                     }  else {
                         // l variable is apparently not initialized or not of correct type
                         log("Err. Variable: " + tokens[bOperatorIndex-1] + " is not a boolean.");
-                        return -1;
+                        return null;
                     }
                 }
                 
@@ -405,7 +404,7 @@ public class Interpreter
                     if(!variableNames.contains(tokens[bOperatorIndex + 1]))
                     {
                         log("Err. Variable not initialized.");
-                        return -1; 
+                        return null; 
                     }
 
                     if(variableValues.get(variableNames.indexOf(tokens[bOperatorIndex+1])).equals("true"))
@@ -417,7 +416,7 @@ public class Interpreter
                     }  else {
                         // l variable is apparently not initialized or not of correct type
                         log("Err. Variable: " + tokens[bOperatorIndex+1] + " is not a boolean.");
-                        return -1;
+                        return null;
                     }
                 }
                  
@@ -438,7 +437,7 @@ public class Interpreter
 
                     default:
                         log("Err. BOperator calculation fell through to default. Operator not recognised?");
-                        return -1;
+                        return null;
                 }
 
                 tokens[bOperatorIndex + 1] = result ? "true" : "false";
@@ -449,11 +448,15 @@ public class Interpreter
                 tokenTypes = popIndexInStringArray(tokenTypes, bOperatorIndex - 1);
             }
             log("bOperation complete, result: " + Arrays.toString(tokenTypes) + " : " + Arrays.toString(tokens));
-        }
+        } 
+        return new tokenMap(tokens, tokenTypes);
+    }
 
-        /**
-         * Handling Operators. (Integers for now : 17.09.23)
-        */
+    private static tokenMap executeOperator(tokenMap tM)
+    {
+        String[] tokenTypes = tM.tokenTypes;
+        String[] tokens = tM.tokens;
+
         int operatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<Operator>"); // There are obvious ways to improve performance. Calculate this when parsing for example.
         if(operatorInstanceCount > 0)
         {
@@ -464,7 +467,7 @@ public class Interpreter
                 if(operatorIndex < 0)
                 {
                     log("Err. Searching for percieved operator in expression failed.");
-                    return -1;
+                    return null;
                 }
 
                 int l, r;
@@ -477,7 +480,7 @@ public class Interpreter
                         l = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex - 1])).replace("\"", ""));
                     } else {
                         log("Err. unexpected type left of operator.");
-                        return -1;
+                        return null;
                     }
 
                     if(tokenTypes[operatorIndex + 1].equals("<Numeric>"))
@@ -487,12 +490,12 @@ public class Interpreter
                         r = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex + 1])).replace("\"", ""));
                     } else {
                         log("Err. unexpected type right of operator.");
-                        return -1;
+                        return null;
                     }
                 } catch (NumberFormatException nfe) {
                     log("Err. Unable to format numeric type.");
                     nfe.printStackTrace();
-                    return -1;
+                    return null;
                 }
 
                 //Now perform the integer operation
@@ -521,11 +524,11 @@ public class Interpreter
                     
                         default:
                             log("Err. Operator calculation fell through to defualt. Operator not recognised?");
-                            return -1;
+                            return null;
                     }
                 } catch(Exception e) {
                     e.printStackTrace();
-                    return -1;
+                    return null;
                 }
 
                 tokens[operatorIndex + 1] = String.valueOf(result);
@@ -536,18 +539,22 @@ public class Interpreter
                 tokenTypes = popIndexInStringArray(tokenTypes, operatorIndex - 1);
                 
             }
-        }
+        } 
+        return new tokenMap(tokens, tokenTypes);
+    }
+
+    private static tokenMap executeKeyword(tokenMap tM)
+    {
+        String[] tokenTypes = tM.tokenTypes;
+        String[] tokens = tM.tokens;
         
-        /**
-         * Handling keywords!
-         */
         if(java.util.Arrays.stream(tokenTypes).anyMatch("<Keyword>"::equals))
         {
             int keywordIndex = Arrays.binarySearch(tokenTypes, "<Keyword>");
             if(keywordIndex < 0)
             {
                 log("Err. The keyword could not be found in the expression.");
-                return -1;
+                return null;
             } else {
                 // Handle the keyword.
                 String keyword = tokens[keywordIndex];
@@ -557,7 +564,7 @@ public class Interpreter
                         if(tokens.length > 2 || !(tokenTypes[1].equals("<Variable>") || tokenTypes[1].equals("<String>")))
                         {
                             log("Err. Incorrect usage of out keyword.");
-                            return -1;
+                            return null;
                         } else {
                             if(tokenTypes[1].equals("<Variable>"))
                             {
@@ -567,13 +574,13 @@ public class Interpreter
                                     System.out.println(variableValues.get(variableNames.indexOf(tokens[1])).replace("\"", ""));
                                 } else {
                                     log("Err. Incorrect usage of out keyword. Variable Access Error.");
-                                    return -1;
+                                    return null;
                                 }
                             } else {
                                 System.out.println(tokens[1].replace("\"", ""));
                             }
                         }
-                        return 0;
+                        return tM;
 
                     case "in":
                         // Get input from console!
@@ -582,7 +589,7 @@ public class Interpreter
                         if(inputTokenMap == null)
                         {
                             log("Err. Invalid input.");
-                            return -1;
+                            return null;
                         }
                         String token = inputTokenMap.tokens[0];
                         String tokenType = inputTokenMap.tokenTypes[0];
@@ -598,7 +605,7 @@ public class Interpreter
                             int tagIndex = 1; // Hacky
                             if(tagIndex < 0)
                             {
-                                return -1;
+                                return null;
                             }
 
                             String tagName = tokens[tagIndex];
@@ -607,7 +614,7 @@ public class Interpreter
                                 lineCount = tagLines.get(tagNames.indexOf(tagName));
                             } else {
                                 log("Err. Unexpected tag found.");
-                                return -1;
+                                return null;
                             }
                         }
                         break;
@@ -631,17 +638,17 @@ public class Interpreter
                                     }
                                 } else {
                                     log("Err. Unknown variable.");
-                                    return -1;
+                                    return null;
                                 }
                             } else {
                                 log("Err. Unexpected type @ condition.");
-                                return -1;
+                                return null;
                             }
 
                             int tagIndex = 2;
                             if(tagIndex < 0)
                             {
-                                return -1;
+                                return null;
                             }
 
                             String tagName = tokens[tagIndex];
@@ -650,23 +657,25 @@ public class Interpreter
                                 lineCount = tagLines.get(tagNames.indexOf(tagName));
                             } else {
                                 log("Err. Unexpected tag found.");
-                                return -1;
+                                return null;
                             }
                         }
                         break;
                 
                     default:
                         log("Err. The keyword switch fell through to default.");
-                        return -1;
+                        return null;
                 }
             }
         }
+        return tM;
+    }
 
- 
+    private static tokenMap executeAssignment(tokenMap tM)
+    {
+        String[] tokenTypes = tM.tokenTypes;
+        String[] tokens = tM.tokens;
 
-        /*
-         * Assignment to variables. Should only be done after all operations have been completed. Expression should be reduced to 3 tokens, 1 assignment symbol and L + R
-         */
         if(java.util.Arrays.stream(tokenTypes).anyMatch("<Assignment>"::equals))
         {
             int assignIndex = java.util.Arrays.binarySearch(tokenTypes, "<Assignment>"); // Should normally just be 1 but who knows.
@@ -703,7 +712,41 @@ public class Interpreter
                 }
             }
         }
+        return new tokenMap(tokens, tokenTypes);
+    }
 
+    private static int execute(tokenMap tm)
+    {
+        /*
+         * Handling Comparisons
+         */
+        tm = executeComparison(tm);
+        if(tm == null){return -1;}
+
+        /*
+         * Handling boolean operators
+         */
+        tm = executeBOperator(tm);
+        if(tm == null){return -1;}
+        
+        /*
+         * Handling Operators. (Integers for now : 17.09.23)
+        */
+        tm = executeOperator(tm);
+        if(tm == null){return -1;}
+        
+        /*
+         * Handling keywords!
+         */
+        tm = executeKeyword(tm);
+        if(tm == null){return -1;}
+
+        /*
+         * Assignment to variables. Should only be done after all operations have been completed. Expression should be reduced to 3 tokens, 1 assignment symbol and L + R
+         */
+        tm = executeAssignment(tm);
+        if(tm == null){return -1;}
+        
         return 0;
     }
 
