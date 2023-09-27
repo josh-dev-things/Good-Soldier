@@ -1,3 +1,8 @@
+package Interpreter;
+
+// Interfaces
+import Interpreter.Interfaces.*;
+
 /*
  * This is the interpreter for Good Soldier (gos) Script: .goss
  * gos protocols will be located in .gosp files
@@ -21,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.nio.file.*;
@@ -30,13 +34,14 @@ import java.nio.file.*;
 
 public class Interpreter
 {
-    /*
+    /**
      * Debug attributes for modification via cmd line args
     */
-    private static boolean debug = false; //NOT USED YET!
+    private static boolean debug = false;
 
     enum fileSearchRegex{
-        Script(".*\\.goss");
+        Script(".*\\.goss"),
+        Protocol(".*\\.gosp");
         private final String regex;
 
         private fileSearchRegex(String s)
@@ -113,7 +118,7 @@ public class Interpreter
         String[] protocolFilePaths = null;
 
         try(Stream<Path> stream = Files.walk(Paths.get("./"))){
-            Object[] paths = stream.filter(path -> path.getFileName().toString().endsWith(".gosp")).toArray();
+            Object[] paths = stream.filter(path -> path.getFileName().toString().matches(fileSearchRegex.Protocol.regex)).toArray();
             for (Object p : paths) {
                 log("Found protocol file: " + p.toString());
             }
@@ -180,7 +185,7 @@ public class Interpreter
                      */
                     String[] blocks = line.split("\\s+");
 
-                    tokenMap parseResult = Parser.parse(blocks);
+                    TokenMap parseResult = Parser.parse(blocks);
 
                     if(parseResult == null)
                     {
@@ -237,7 +242,7 @@ public class Interpreter
         return local;
     }
 
-    private static tokenMap executeComparison(tokenMap tM)
+    private static TokenMap executeComparison(TokenMap tM)
     {
         String[] tokenTypes = tM.tokenTypes;
         String[] tokens = tM.tokens;
@@ -338,10 +343,10 @@ public class Interpreter
                 tokenTypes = popIndexInStringArray(tokenTypes, comparatorIndex - 1);  
             }
         }
-        return new tokenMap(tokens, tokenTypes);
+        return new TokenMap(tokens, tokenTypes);
     }
 
-    private static tokenMap executeBOperator(tokenMap tM)
+    private static TokenMap executeBOperator(TokenMap tM)
     {
         String[] tokenTypes = tM.tokenTypes;
         String[] tokens = tM.tokens;
@@ -449,10 +454,10 @@ public class Interpreter
             }
             log("bOperation complete, result: " + Arrays.toString(tokenTypes) + " : " + Arrays.toString(tokens));
         } 
-        return new tokenMap(tokens, tokenTypes);
+        return new TokenMap(tokens, tokenTypes);
     }
 
-    private static tokenMap executeOperator(tokenMap tM)
+    private static TokenMap executeOperator(TokenMap tM)
     {
         String[] tokenTypes = tM.tokenTypes;
         String[] tokens = tM.tokens;
@@ -540,10 +545,10 @@ public class Interpreter
                 
             }
         } 
-        return new tokenMap(tokens, tokenTypes);
+        return new TokenMap(tokens, tokenTypes);
     }
 
-    private static tokenMap executeKeyword(tokenMap tM)
+    private static TokenMap executeKeyword(TokenMap tM)
     {
         String[] tokenTypes = tM.tokenTypes;
         String[] tokens = tM.tokens;
@@ -585,7 +590,7 @@ public class Interpreter
                     case "in":
                         // Get input from console!
                         String inString ="\"" + System.console().readLine() + "\"";
-                        tokenMap inputTokenMap = Parser.parse(new String[]{inString});
+                        TokenMap inputTokenMap = Parser.parse(new String[]{inString});
                         if(inputTokenMap == null)
                         {
                             log("Err. Invalid input.");
@@ -671,7 +676,7 @@ public class Interpreter
         return tM;
     }
 
-    private static tokenMap executeAssignment(tokenMap tM)
+    private static TokenMap executeAssignment(TokenMap tM)
     {
         String[] tokenTypes = tM.tokenTypes;
         String[] tokens = tM.tokens;
@@ -712,10 +717,10 @@ public class Interpreter
                 }
             }
         }
-        return new tokenMap(tokens, tokenTypes);
+        return new TokenMap(tokens, tokenTypes);
     }
 
-    private static int execute(tokenMap tm)
+    private static int execute(TokenMap tm)
     {
         /*
          * Handling Comparisons
@@ -796,7 +801,7 @@ class Parser
         }   
     }
 
-    public static tokenMap parse(String[] tokens)
+    public static TokenMap parse(String[] tokens)
     {
         String[] tokenCombination = new String[tokens.length];
         String tokenDebugString = "";
@@ -847,7 +852,7 @@ class Parser
 
         //The token combination is the most important!
         Interpreter.log(Arrays.toString(tokenCombination));
-        return new tokenMap(tokens, tokenCombination);
+        return new TokenMap(tokens, tokenCombination);
     }
 
     public static boolean isTag(String line)
@@ -856,20 +861,4 @@ class Parser
         return pattern.matcher(line).matches();
     }
     
-}
-
-
-/*
- * Necessary so that the executor can access the tokens and their types.
- */
-class tokenMap
-{
-    public String[] tokens;
-    public String[] tokenTypes;
-
-    public tokenMap(String[] tokens, String[] tokenTypes)
-    {
-        this.tokens = tokens;
-        this.tokenTypes = tokenTypes;
-    }
 }
