@@ -18,7 +18,7 @@ public class Parser implements IParser {
         Comparator("(\\=\\=)|(\\<\\=)|(\\>\\=)|\\>||\\<||(\\!\\=)"),
         Keyword("in|out|jump\\?|jump"),
         Logic("true|false"),
-        Set("\\[([a-zA-Z_]+[a-zA-Z0-9_]*)(,[a-zA-Z_]+[a-zA-Z0-9_]*)*"),
+        Set("\\[([a-zA-Z_]+[a-zA-Z0-9_]*)(,[a-zA-Z_]+[a-zA-Z0-9_]*)*"), //Not implemented yet
         Comment("\\/\\/.*"),
         Variable("\\!?[a-zA-Z_]+[a-zA-Z0-9_]*");
 

@@ -1,0 +1,24 @@
+START
+
+i = 1
+total = 0
+MAX = 10
+
+loop:
+    mod3 = i % 3
+    jump? mod3 != 0 skip3
+    total = total + i
+    out i
+skip3:
+    mod5 = i % 5
+    jump? mod5 != 0 skip5
+    total = total + i
+    out i
+skip5:
+    i = i + 1
+    jump? i < 10 loop
+
+out "Result:"
+out total
+
+END

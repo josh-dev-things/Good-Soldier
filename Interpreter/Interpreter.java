@@ -3,34 +3,14 @@ package Interpreter;
 // Interfaces
 import Interpreter.Interfaces.*;
 
-/*
- * This is the interpreter for Good Soldier (gos) Script: .goss
- * gos protocols will be located in .gosp files
- * 
- * Keywords:
- *  out
- *  in
- *  Integer
- * 
- * Operations:
- *  +, -, *, /
- *  &, |, ^, !
- *  &&, ||, ^^
- */
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.stream.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.nio.file.*;
-
-
 
 public class Interpreter
 {
