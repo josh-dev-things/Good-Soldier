@@ -1,6 +1,6 @@
 START
 
-out "---\nDivision-Calculator\n---"
+out "---Division-Calculator---"
 
 out "Enter-Numerator:"
 op1 = in
