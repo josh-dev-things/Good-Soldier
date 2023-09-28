@@ -186,6 +186,7 @@ public class Interpreter
                      * - e.g. variable2+variable3 would only be matched to <Var><Op><Var> Because variables cannot contain + character!
                      * - This is not top priority atm, save for later.
                      */
+                    line = line.replaceAll("\\t+", "").replaceAll("\\s+|^ +| +$|( )+", " ").trim();
                     String[] blocks = line.split("\\s+");
 
                     /*

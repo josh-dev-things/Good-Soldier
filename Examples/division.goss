@@ -6,8 +6,8 @@ out "Enter-Numerator:"
 op1 = in
 
 divByZeroAvoidance:
-out "Enter-Divisor:"
-op2 = in
+    out "Enter-Divisor:"
+    op2     =     in
 jump? op2 == 0 divByZeroAvoidance
 
 quotient = op1 / op2
