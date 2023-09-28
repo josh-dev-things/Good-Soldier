@@ -185,7 +185,12 @@ public class Interpreter
                      */
                     String[] blocks = line.split("\\s+");
 
-                    TokenMap parseResult = Parser.parse(blocks);
+                    /*
+                     * Instantiate parser instance
+                     */
+                    IParser parser = new Parser();
+
+                    ITokenMap parseResult = parser.parse(blocks);
 
                     if(parseResult == null)
                     {
@@ -242,10 +247,12 @@ public class Interpreter
         return local;
     }
 
-    private static TokenMap executeComparison(TokenMap tM)
+    private static ITokenMap executeComparison(ITokenMap tM)
     {
-        String[] tokenTypes = tM.tokenTypes;
-        String[] tokens = tM.tokens;
+        String[] tokenTypes = tM.getTokenTypes();
+        String[] tokens = tM.getTokens();
+        IParser parser = new Parser(); //TODO: WRITE A PARSER FACTORY!
+
         int comparatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<Comparator>");
         if(comparatorInstanceCount > 0)
         {
@@ -272,7 +279,7 @@ public class Interpreter
                         {
                             l = variableValues.get(variableNames.indexOf(l));
                             l = l.replace("\"", "");
-                            type = Parser.parse(new String[]{l}).tokenTypes[0];
+                            type = parser.parse(new String[]{l}).getTokenTypes()[0];
                         }
                     }
 
@@ -282,7 +289,7 @@ public class Interpreter
                         {
                             r = variableValues.get(variableNames.indexOf(r));
                             r = r.replace("\"", "");
-                            tokenTypes[comparatorIndex + 1] = Parser.parse(new String[]{r}).tokenTypes[0];
+                            tokenTypes[comparatorIndex + 1] = parser.parse(new String[]{r}).getTokenTypes()[0];
                         }
                     }
                     
@@ -346,10 +353,10 @@ public class Interpreter
         return new TokenMap(tokens, tokenTypes);
     }
 
-    private static TokenMap executeBOperator(TokenMap tM)
+    private static ITokenMap executeBOperator(ITokenMap tM)
     {
-        String[] tokenTypes = tM.tokenTypes;
-        String[] tokens = tM.tokens;
+        String[] tokenTypes = tM.getTokenTypes();
+        String[] tokens = tM.getTokens();
 
         int bOperatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<BOperator>");
         if(bOperatorInstanceCount > 0)
@@ -457,10 +464,10 @@ public class Interpreter
         return new TokenMap(tokens, tokenTypes);
     }
 
-    private static TokenMap executeOperator(TokenMap tM)
+    private static ITokenMap executeOperator(ITokenMap tM)
     {
-        String[] tokenTypes = tM.tokenTypes;
-        String[] tokens = tM.tokens;
+        String[] tokenTypes = tM.getTokenTypes();
+        String[] tokens = tM.getTokens();
 
         int operatorInstanceCount = Collections.frequency(Arrays.asList(tokenTypes), "<Operator>"); // There are obvious ways to improve performance. Calculate this when parsing for example.
         if(operatorInstanceCount > 0)
@@ -548,10 +555,11 @@ public class Interpreter
         return new TokenMap(tokens, tokenTypes);
     }
 
-    private static TokenMap executeKeyword(TokenMap tM)
+    private static ITokenMap executeKeyword(ITokenMap tM)
     {
-        String[] tokenTypes = tM.tokenTypes;
-        String[] tokens = tM.tokens;
+        String[] tokenTypes = tM.getTokenTypes();
+        String[] tokens = tM.getTokens();
+        IParser parser = new Parser();
         
         if(java.util.Arrays.stream(tokenTypes).anyMatch("<Keyword>"::equals))
         {
@@ -590,14 +598,14 @@ public class Interpreter
                     case "in":
                         // Get input from console!
                         String inString ="\"" + System.console().readLine() + "\"";
-                        TokenMap inputTokenMap = Parser.parse(new String[]{inString});
+                        ITokenMap inputTokenMap = parser.parse(new String[]{inString});
                         if(inputTokenMap == null)
                         {
                             log("Err. Invalid input.");
                             return null;
                         }
-                        String token = inputTokenMap.tokens[0];
-                        String tokenType = inputTokenMap.tokenTypes[0];
+                        String token = inputTokenMap.getTokens()[0];
+                        String tokenType = inputTokenMap.getTokenTypes()[0];
                         
                         tokens[keywordIndex] = token;
                         tokenTypes[keywordIndex] = tokenType;
@@ -676,10 +684,10 @@ public class Interpreter
         return tM;
     }
 
-    private static TokenMap executeAssignment(TokenMap tM)
+    private static ITokenMap executeAssignment(ITokenMap tM)
     {
-        String[] tokenTypes = tM.tokenTypes;
-        String[] tokens = tM.tokens;
+        String[] tokenTypes = tM.getTokenTypes();
+        String[] tokens = tM.getTokens();
 
         if(java.util.Arrays.stream(tokenTypes).anyMatch("<Assignment>"::equals))
         {
@@ -720,7 +728,7 @@ public class Interpreter
         return new TokenMap(tokens, tokenTypes);
     }
 
-    private static int execute(TokenMap tm)
+    private static int execute(ITokenMap tm)
     {
         /*
          * Handling Comparisons
@@ -771,94 +779,4 @@ public class Interpreter
     {
         System.out.println(s);
     }
-}
-
-
-
-class Parser
-{
-    // Debugging this will be a pain
-    enum tokenMapping{
-        Whitespace("^\s*$"),
-        String("\".*\""),
-        Tag("[a-zA-Z]+[0-9]*\\:"),
-        Numeric("[0-9]+"),
-        Operator("\\+|\\-|\\/|\\*|\\%"), // +, -, /, *
-        BOperator("(\\|{1,2})|(\\&{1,2})"),
-        Assignment("(\\<\\-)|(\\-\\>)|(\\=)"),
-        Comparator("(\\=\\=)|(\\<\\=)|(\\>\\=)|\\>||\\<||(\\!\\=)"),
-        Keyword("in|out|jump\\?|jump"),
-        Logic("true|false"),
-        Set("\\[([a-zA-Z_]+[a-zA-Z0-9_]*)(,[a-zA-Z_]+[a-zA-Z0-9_]*)*"),
-        Comment("\\/\\/.*"),
-        Variable("\\!?[a-zA-Z_]+[a-zA-Z0-9_]*");
-
-        private final String regex;
-
-        private tokenMapping(String s)
-        {
-            regex = s;
-        }   
-    }
-
-    public static TokenMap parse(String[] tokens)
-    {
-        String[] tokenCombination = new String[tokens.length];
-        String tokenDebugString = "";
-        
-        int tIndex = 0;
-        tokenLoop:
-        for(String token : tokens)
-        {
-            if(token == "")
-            {
-                Interpreter.log("EMPTY");
-                continue;
-            }
-
-            boolean match = false;
-            for(tokenMapping tm : tokenMapping.values())
-            {
-                Pattern tokenPattern = Pattern.compile(tm.regex);
-                if(tokenPattern.matcher(token).matches())
-                {
-                    // Correct token!
-                    tokenCombination[tIndex] = "<" + tm.name() + ">";
-                    tokenDebugString += "<" + tm.name() + ">"; 
-                    match = true;
-                    // interpreter.log(token + " : <" + tm.name() + ">");
-                    
-                    if(tm == tokenMapping.Comment)
-                    {
-                        // Comment found, rest of the line should not be parsed.
-                        Interpreter.log("Comment found: Skipping...");
-                        tokenCombination = Arrays.copyOfRange(tokenCombination, 0, tIndex); // Copy only the part of the expression that is not a comment. (This is clean imo).
-                        tokens = Arrays.copyOfRange(tokens, 0, tIndex);
-                        break tokenLoop; // THIS IS SO COOL
-                    }
-
-                    break;
-                }
-            }
-
-            // If no match has been found then the parser fails!
-            if(!match)
-            {
-                Interpreter.log("Parser failed to match token: '" + token + "'");
-                return null;
-            }
-            tIndex++;
-        }
-
-        //The token combination is the most important!
-        Interpreter.log(Arrays.toString(tokenCombination));
-        return new TokenMap(tokens, tokenCombination);
-    }
-
-    public static boolean isTag(String line)
-    {
-        Pattern pattern = Pattern.compile(tokenMapping.Tag.regex);
-        return pattern.matcher(line).matches();
-    }
-    
 }
