@@ -1,2 +1,2 @@
-Good Soldier : An Imperative, Protocol Based, Interpreted Programming Language.
+Good Soldier : An Imperative, Error-Tolerant, Interpreted Programming Language.
 =================================================================================

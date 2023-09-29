@@ -8,7 +8,7 @@ import java.util.*;
 public class Executor implements IExecutor{
 
     private static ArrayList<String> variableNames = new ArrayList<String>(); // e.g. i1
-    private static ArrayList<String> variableValues = new ArrayList<String>(); // e.g. 59 
+    private static ArrayList<Object> variableValues = new ArrayList<Object>(); // e.g. 59 
 
     @Override
     public int execute(ITokenMap tm)
@@ -76,7 +76,7 @@ public class Executor implements IExecutor{
                     {
                         if(variableNames.contains(l))
                         {
-                            l = variableValues.get(variableNames.indexOf(l));
+                            l = (String)variableValues.get(variableNames.indexOf(l));
                             l = l.replace("\"", "");
                             type = parser.parse(new String[]{l}).getTokenTypes()[0];
                         }
@@ -86,7 +86,7 @@ public class Executor implements IExecutor{
                     {
                         if(variableNames.contains(r))
                         {
-                            r = variableValues.get(variableNames.indexOf(r));
+                            r = (String)variableValues.get(variableNames.indexOf(r));
                             r = r.replace("\"", "");
                             tokenTypes[comparatorIndex + 1] = parser.parse(new String[]{r}).getTokenTypes()[0];
                         }
@@ -288,7 +288,7 @@ public class Executor implements IExecutor{
                     {
                         l = Integer.parseInt(tokens[operatorIndex-1]);
                     } else if(tokenTypes[operatorIndex - 1].equals("<Variable>")) {
-                        l = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex - 1])).replace("\"", ""));
+                        l = Integer.parseInt(((String)variableValues.get(variableNames.indexOf(tokens[operatorIndex - 1]))).replace("\"", ""));
                     } else {
                         log("Err. unexpected type left of operator.");
                         return null;
@@ -298,7 +298,7 @@ public class Executor implements IExecutor{
                     {
                         r = Integer.parseInt(tokens[operatorIndex + 1]);
                     } else if(tokenTypes[operatorIndex + 1].equals("<Variable>")) {
-                        r = Integer.parseInt(variableValues.get(variableNames.indexOf(tokens[operatorIndex + 1])).replace("\"", ""));
+                        r = Integer.parseInt(((String)variableValues.get(variableNames.indexOf(tokens[operatorIndex + 1]))).replace("\"", ""));
                     } else {
                         log("Err. unexpected type right of operator.");
                         return null;
@@ -383,7 +383,7 @@ public class Executor implements IExecutor{
                                 if(variableNames.contains(tokens[1]))
                                 {
                                     // Output variable value
-                                    System.out.println(variableValues.get(variableNames.indexOf(tokens[1])).replace("\"", ""));
+                                    System.out.println(((String)variableValues.get(variableNames.indexOf(tokens[1]))).replace("\"", ""));
                                 } else {
                                     log("Err. Incorrect usage of out keyword. Variable Access Error.");
                                     return null;

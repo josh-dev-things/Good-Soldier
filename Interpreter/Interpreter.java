@@ -186,7 +186,7 @@ public class Interpreter
                     if(executor.execute(parseResult) < 0)
                     {
                         log("Interpreter encountered error while executing line: " + lineCount);
-                        return;
+                        //return;
                     } 
 
                 }   else    {
