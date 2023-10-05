@@ -30,9 +30,35 @@ _See Parser.tokenMapping for token regex definitions. See Examples/ for some usa
 Grammar
 ------------
 Rudimentary Context-Free Grammar for Good Soldier Script:
-
+```
 procedure -> open expression close
-open -> **"START"** (**"<-"** args)?
+
+open -> "START" ("<-" args)?
+close -> "END" ("->" args)?
+args -> "["value ("," value)*"]"
+
+expression -> tokenC | ε
+tokenC -> tag | io | jump | assignment
+assignment -> var "=" value
+value -> var | computation | numeric | string | boolean
+var -> "_*[a-zA-Z]([a-zA-Z]*[0-9]*)*"
+
+computation -> value operator value
+operator -> nOperator | sOperator | bOperator
+nOperator -> "+|-|/|*|%|==|>=|<=|!="
+sOperator -> "s+"|"s="|"s!="
+bOperator -> "&" | "|" | "^"
+numeric -> "[0-9]+(\.[0-9]+)?"
+string -> "\".\""
+boolean -> "TRUE" | "FALSE"
+
+tag -> var ":"
+jump -> "jump" var | "jump?" (boolean | var) var
+
+io -> in | out
+in -> "in" var
+out -> "out" var
+```
 
 ---
 Contribution
