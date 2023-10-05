@@ -27,6 +27,14 @@ Documentation
 _See Parser.tokenMapping for token regex definitions. See Examples/ for some usage. If unsure about particular functionality, it probably doesn't exist. In which case please implement it and contribute!_
 
 ---
+Grammar
+------------
+Rudimentary Context-Free Grammar for Good Soldier Script:
+
+procedure -> open expression close
+open -> **"START"** (**"<-"** args)?
+
+---
 Contribution
 ------------
 While the language is evidently in its infancy, I've made it public so that other 1st and 2nd year students at my university can contribute to it and investigate writing a parser themselves. If you'd like to contribute, please fork the repository, make your additions and then create a pull request.
