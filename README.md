@@ -31,7 +31,7 @@ Grammar
 ------------
 Rudimentary Context-Free Grammar for Good Soldier Script:
 ```
-procedure -> open expression close
+procedure -> open expression* close
 
 open -> "START" ("<-" args)?
 close -> "END" ("->" args)?
