@@ -70,7 +70,9 @@ While the language is evidently in its infancy, I've made it public so that othe
 We're looking for people to help with:
 - Documentation
 - Formally, well-defined grammar for the language
-- Programming the parser
+- Programming the interpreter
+- Designing functionality
+- Making coffee
 - Writing examples
 - Testing
 
