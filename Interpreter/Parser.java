@@ -31,7 +31,13 @@ public class Parser implements IParser {
     }
 
     @Override
-    public TokenMap parse(String[] tokens)
+    public TokenMap parse(String expression)
+    {
+        return null;
+    }
+
+    @Deprecated
+    public TokenMap parseTokens(String[] tokens)
     {
         String[] tokenCombination = new String[tokens.length];
         String tokenDebugString = "";
