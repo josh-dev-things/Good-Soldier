@@ -6,10 +6,12 @@ Good Soldier Script (.goss) is a humble programming language with the following 
 - Weak Typing (Barely any typing at all)
 - Low-level programming workflow (Despite being interpreted in Java)
 - Slow execution (Probably, I haven't checked yet)
-- **Error-Tolerance** (Will always fully interpret. Regardless of any runtime errors, the script will all be executed and interpreting won't halt)
+- Error-Tolerance (Will always fully interpret. Regardless of any runtime errors, the script will all be executed and interpreting won't halt)
 - Surprises (Oodles of undefined behaviour)
 
-The language is still under development and should, under no circumstances, be used for anything more than a bit of fun. The benchmark for the language was initially to solve a few [Project Euler](https://projecteuler.net/) problems, but as it is developed further and more data-types and different functionalities are added, perhaps its usage scope will grow.
+The language is no longer under development and should, under no circumstances, be used for anything more than a bit of fun. The benchmark for the language was initially to solve a few [Project Euler](https://projecteuler.net/) problems, but as it is developed further and more data-types and different functionalities are added, perhaps its usage scope will grow.
+
+_No longer being developed. I will likely re-write GOSS from the ground up another time at a much lower level once I have learnt more._
 
 ---
 Installation
@@ -65,19 +67,7 @@ Contribution
 ------------
 While the language is evidently in its infancy, I've made it public so that other 1st and 2nd year students at my university can contribute to it and investigate writing a parser themselves. If you'd like to contribute, please fork the repository, make your additions and then create a pull request.
 
-**Atomic, specific and well-integrated commits are likely to get merged.**
-
-We're looking for people to help with:
-- Documentation
-- Formally, well-defined grammar for the language
-- Programming the interpreter
-- Designing functionality
-- Making coffee
-- Writing examples
-- Testing
-
-If you are a Java verteran or a senior honours student at the university, this project is likely not going to be a valuable use of your time. 1st and 2nd years should consider contributing!
-
+**No longer in development.**
 ---
 License
 -------
